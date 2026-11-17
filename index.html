@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Daily Routine</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: system-ui, sans-serif;
+    background:#0d1117; color:#e6edf3;
+    min-height:100vh; padding:16px 14px 90px;
+  }
+  header { padding:14px 2px 6px; }
+  h1 { font-size:22px; font-weight:700; }
+  .date { font-size:13px; color:#8b949e; margin-top:2px; }
+  .score-wrap {
+    background:linear-gradient(135deg,#161b22,#1c2431);
+    border:1px solid #21262d; border-radius:16px;
+    padding:16px; margin-top:14px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .ring { --p:0; width:64px; height:64px; border-radius:50%;
+    background:conic-gradient(#2ea043 calc(var(--p)*1%), #21262d 0);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .ring::before { content:""; position:absolute; width:50px; height:50px; border-radius:50%; background:#161b22; }
+  .ring span { position:relative; z-index:1; font-size:15px; font-weight:700; }
+  .streak { font-size:14px; }
+  .streak b { color:#f0883e; font-size:20px; }
+  .streak small { display:block; color:#8b949e; font-size:12px; }
+  .slot {
+    display:flex; align-items:center; gap:12px;
+    background:#161b22; border:1px solid #21262d; border-radius:14px;
+    padding:14px; margin-top:10px; transition:border-color .2s;
+  }
+  .slot.done { border-color:#2ea043; }
+  .tick {
+    width:30px; height:30px; border-radius:9px; flex-shrink:0;
+    border:2px solid #30363d; display:flex; align-items:center; justify-content:center;
+    font-size:16px; color:transparent; transition:all .15s;
+  }
+  .slot.done .tick { background:#2ea043; border-color:#2ea043; color:#fff; }
+  .slot:active { transform:scale(.98); }
+  .slot .info { flex:1; }
+  .slot .time { font-size:12px; color:#f0883e; font-weight:600; }
+  .slot .name { font-size:15px; margin-top:1px; }
+  .slot.done .name { color:#8b949e; text-decoration:line-through; }
+  .divider { text-align:center; color:#484f58; font-size:12px; margin:16px 0 2px; letter-spacing:2px; }
+  nav {
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; background:#161b22; border-top:1px solid #21262d;
+  }
+  nav button {
+    flex:1; padding:14px 0 18px; background:none; border:none;
+    color:#8b949e; font-size:12px; font-family:inherit;
+  }
+  nav button.on { color:#2ea043; font-weight:700; }
+  .page { display:none; }
+  .page.on { display:block; }
+  .hist { background:#161b22; border:1px solid #21262d; border-radius:14px; padding:14px; margin-top:10px; }
+  .hist .row { display:flex; justify-content:space-between; padding:6px 0; font-size:14px; border-bottom:1px solid #21262d; }
+  .hist .row:last-child { border:none; }
+  .hist .pct { font-weight:700; color:#2ea043; }
+  .addbtn {
+    width:100%; margin-top:14px; padding:14px; border-radius:14px;
+    border:2px dashed #30363d; background:none; color:#2ea043;
+    font-size:15px; font-weight:700; font-family:inherit;
+  }
+  .editrow { display:flex; gap:8px; align-items:center; background:#161b22;
+    border:1px solid #21262d; border-radius:14px; padding:10px; margin-top:10px; }
+  .editrow input { flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px;
+    color:#e6edf3; padding:9px; font-size:14px; font-family:inherit; min-width:0; }
+  .editrow .time { max-width:110px; }
+  .editrow .del { background:none; border:none; color:#f85149; font-size:20px; padding:4px 8px; }
+  .savebtn {
+    width:100%; margin-top:14px; padding:14px; border-radius:14px; border:none;
+    background:#2ea043; color:#fff; font-size:15px; font-weight:700; font-family:inherit;
+  }
+  .quote { font-size:12.5px; color:#79c0ff; margin-top:8px; font-style:italic; }
+  .nowbadge { background:#f0883e; color:#fff; font-size:10px; font-weight:800;
+    padding:2px 8px; border-radius:99px; margin-left:8px; vertical-align:middle;
+    animation:pulse 1.5s infinite; }
+  @keyframes pulse { 50% { opacity:.5; } }
+  .slot { animation:slidein .25s ease; }
+  @keyframes slidein { from { opacity:0; transform:translateY(8px);} }
+  .tick { transition:all .15s cubic-bezier(.2,2,.4,1); }
+  .slot.done .tick:active { transform:scale(1.3); }
+  .bars { display:flex; gap:6px; align-items:flex-end; height:90px; padding:8px 2px 0; }
+  .bars .b { flex:1; background:#21262d; border-radius:6px 6px 0 0; position:relative; min-height:6px; }
+  .bars .b .fill { position:absolute; bottom:0; left:0; right:0; border-radius:6px 6px 0 0;
+    background:linear-gradient(180deg,#3fb950,#2ea043); }
+  .bars .b span { position:absolute; bottom:-20px; left:0; right:0; text-align:center;
+    font-size:9px; color:#8b949e; }
+  .hist { margin-bottom:26px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Daily Routine 🎯</h1>
+  <div class="date" id="date"></div>
+  <div class="quote" id="quote"></div>
+</header>
+
+<div class="score-wrap">
+  <div class="ring" id="ring"><span id="pct">0%</span></div>
+  <div class="streak">
+    🔥 <b id="streak">0</b> <small>day streak</small>
+    <small id="doneCount">0 / 0 complete</small>
+    <small id="extraStats" style="color:#79c0ff"></small>
+  </div>
+</div>
+
+<div class="page on" id="page-today"><div id="list"></div></div>
+<div class="page" id="page-edit"><div class="divider">BUILD YOUR ROUTINE</div><div id="editList"></div><button class="addbtn" onclick="addSlot()">+ add new slot</button><button class="savebtn" onclick="saveRoutine()">✓ Save and build today's list</button></div><div class="page" id="page-history"><div class="divider">LAST FEW DAYS</div><div id="hist"></div></div>
+
+<nav>
+  <button class="on" onclick="go('today',this)">📋 Today</button>
+  <button onclick="go('history',this)">📊 History</button>
+  <button onclick="go('edit',this)">✏️ Edit</button>
+</nav>
+<canvas id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:99"></canvas>
+
+<script>
+const RKEY = "my_routine_v2";
+const KEY = "routine_days";
+let ROUTINE = JSON.parse(localStorage.getItem(RKEY) || "null") || [
+  {time:"3:00 AM", name:"Wake up, freshen up", group:"Morning"},
+  {time:"9:15 - 9:45 AM", name:"Market watch: check POC, VAH, VAL, write notes", group:"Market"},
+  {time:"9:00 AM - 12:00 PM", name:"Study block 1", group:"Study"},
+  {time:"1:00 - 1:15 PM", name:"Quick market check", group:"Market"},
+  {time:"1:00 - 5:00 PM", name:"Study block 2", group:"Study"},
+  {time:"3:15 PM", name:"Market close check", group:"Market"},
+  {time:"9:00 - 10:00 PM", name:"Revision + paper trade logbook review", group:"Night"}
+];
+const GROUPS = ["Morning","Market","Study","Night"];
+const today = () => new Date().toLocaleDateString("en-CA");
+
+function load() { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
+function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+
+function doneCount(d) { return d.items ? d.items.filter(Boolean).length : 0; }
+
+function render() {
+  const d = load();
+  const t = today();
+  if (!d[t]) d[t] = {items: ROUTINE.map(_=>false)};
+  const day = d[t];
+  save(d);
+
+  document.getElementById("date").textContent =
+    new Date().toLocaleDateString("en-IN",{weekday:"long", day:"numeric", month:"long"});
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  let lastG = "";
+  ROUTINE.forEach((r,i) => {
+    if (r.group !== lastG) {
+      lastG = r.group;
+      const div = document.createElement("div");
+      div.className = "divider";
+      div.textContent = r.group.toUpperCase();
+      list.appendChild(div);
+    }
+    const el = document.createElement("div");
+    el.className = "slot" + (day.items[i] ? " done" : "");
+    let nowTag = "";
+    const h = new Date().getHours() + new Date().getMinutes()/60;
+    const mm = r.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/g);
+    if (mm && mm.length >= 1) {
+      const to24 = t => { const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/); let H = +m[1]%12 + (m[3]==="PM"?12:0); return H + +m[2]/60; };
+      if (mm.length === 2) { const a = to24(mm[0]), b = to24(mm[1]); if (h >= a && h <= b) nowTag = '<span class="nowbadge">NOW</span>'; }
+      else { const a = to24(mm[0]); if (Math.abs(h - a) <= 1) nowTag = '<span class="nowbadge">NOW</span>'; }
+    }
+    el.innerHTML = `<div class="tick">✓</div><div class="info"><div class="time">${r.time}${nowTag}</div><div class="name">${r.name}</div></div>`;
+    el.onclick = () => { const x = load(); x[t].items[i] = !x[t].items[i]; save(x); render();
+      if (navigator.vibrate) navigator.vibrate(15);
+      if (x[t].items[i] && doneCount(x[t]) === ROUTINE.length) setTimeout(confetti, 150); };
+    list.appendChild(el);
+  });
+
+  const QUOTES = ["Discipline beats motivation.","Small steps every day.","Plan pakka, mann saaf.","Winners keep the streak alive.","Aaj ka kaam aaj hi.","Consistency is the real flex."];
+  const qi = new Date().getDate() % QUOTES.length;
+  document.getElementById("quote").textContent = QUOTES[qi];
+
+  const n = doneCount(day);
+  const pct = Math.round(n / ROUTINE.length * 100);
+  document.getElementById("pct").textContent = pct + "%";
+  document.getElementById("ring").style.setProperty("--p", pct);
+  document.getElementById("doneCount").textContent = n + " / " + ROUTINE.length + " complete";
+
+  let s = 0, dt = new Date();
+  for(;;) {
+    const k = dt.toLocaleDateString("en-CA");
+    const e = load()[k];
+    if (e && doneCount(e) >= ROUTINE.length * 0.7) { s++; dt.setDate(dt.getDate()-1); }
+    else if (k === today()) { dt.setDate(dt.getDate()-1); }
+    else break;
+  }
+document.getElementById("streak").textContent = s;
+
+  // best streak + 7 day avg
+  const alld = load();
+  let best = 0, run = 0, dts = Object.keys(alld).sort();
+  dts.forEach(k => {
+    const e = alld[k];
+    if (e && e.items && doneCount(e) >= ROUTINE.length * 0.7) { run++; best = Math.max(best, run); }
+    else if (k !== today()) run = 0;
+  });
+  const last7 = dts.slice(-7).map(k => doneCount(alld[k]) / ROUTINE.length * 100);
+  const avg = last7.length ? Math.round(last7.reduce((a,b)=>a+b,0) / last7.length) : 0;
+  document.getElementById("extraStats").textContent = "best " + best + " din, 7-day avg " + avg + "%";
+
+  const h = document.getElementById("hist");
+  h.innerHTML = "";
+  const days = Object.keys(d).sort().reverse().slice(0,14);
+  if (!days.length || (days.length===1 && days[0]===t)) h.innerHTML = '<div class="row"><span>past days scores will show here 👀</span></div>';
+  const show = days.filter(k => k !== t);
+  if (show.length) {
+    h.innerHTML += '<div class="bars">' + show.slice(0,7).map(k => {
+      const p = Math.round(doneCount(d[k]) / ROUTINE.length * 100);
+      return `<div class="b"><div class="fill" style="height:${p}%"></div><span>${k.slice(5)}</span></div>`;
+    }).join("") + '</div><div style="height:26px"></div>';
+  }
+  show.forEach(k => {
+    const p = Math.round(doneCount(d[k]) / ROUTINE.length * 100);
+    h.innerHTML += `<div class="row"><span>${k}</span><span class="pct">${p}%</span></div>`;
+  });
+}
+
+function renderEdit() {
+  const el = document.getElementById("editList");
+  el.innerHTML = "";
+  ROUTINE.forEach((r,i) => {
+    const row = document.createElement("div");
+    row.className = "editrow";
+    row.innerHTML = `<input class="time" value="${r.time}" placeholder="9:15 AM"><input value="${r.name.replace(/"/g,'&quot;')}" placeholder="what to do"><button class="del" onclick="delSlot(${i})">×</button>`;
+    row.querySelectorAll("input")[0].oninput = e => { ROUTINE[i].time = e.target.value; };
+    row.querySelectorAll("input")[1].oninput = e => { ROUTINE[i].name = e.target.value; };
+    el.appendChild(row);
+  });
+}
+function addSlot() { ROUTINE.push({time:"", name:"", group:"Study"}); renderEdit(); }
+function delSlot(i) {
+  if (ROUTINE.length <= 1) { alert("at least one slot must stay 🙂"); return; }
+  ROUTINE.splice(i,1); renderEdit();
+}
+function saveRoutine() {
+  localStorage.setItem(RKEY, JSON.stringify(ROUTINE));
+  localStorage.removeItem("routine_days");
+  render();
+  go("today", document.querySelectorAll("nav button")[0]);
+}
+
+function go(p, btn) {
+  document.querySelectorAll(".page").forEach(x => x.classList.remove("on"));
+  document.getElementById("page-" + p).classList.add("on");
+  if (p === "edit") renderEdit();
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+}
+
+render();
+
+// confetti
+function confetti() {
+  const c = document.getElementById("confetti");
+  c.width = innerWidth; c.height = innerHeight;
+  const ctx = c.getContext("2d");
+  const cols = ["#2ea043","#f0883e","#79c0ff","#d2a8ff","#ffd700"];
+  const P = Array.from({length:120}, () => ({
+    x: Math.random()*c.width, y: -20-Math.random()*c.height*0.4,
+    w: 6+Math.random()*6, h: 8+Math.random()*8,
+    v: 2+Math.random()*3, r: Math.random()*Math.PI, vr: (Math.random()-.5)*.2,
+    col: cols[Math.floor(Math.random()*cols.length)]
+  }));
+  let f = 0;
+  (function loop(){
+    ctx.clearRect(0,0,c.width,c.height);
+    P.forEach(p => { p.y += p.v; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if (++f < 180) requestAnimationFrame(loop);
+    else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+</script>
+</body>
+</html>
