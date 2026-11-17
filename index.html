@@ -124,13 +124,7 @@
 const RKEY = "my_routine_v2";
 const KEY = "routine_days";
 let ROUTINE = JSON.parse(localStorage.getItem(RKEY) || "null") || [
-  {time:"3:00 AM", name:"Wake up, freshen up", group:"Morning"},
-  {time:"9:15 - 9:45 AM", name:"Market watch: check POC, VAH, VAL, write notes", group:"Market"},
-  {time:"9:00 AM - 12:00 PM", name:"Study block 1", group:"Study"},
-  {time:"1:00 - 1:15 PM", name:"Quick market check", group:"Market"},
-  {time:"1:00 - 5:00 PM", name:"Study block 2", group:"Study"},
-  {time:"3:15 PM", name:"Market close check", group:"Market"},
-  {time:"9:00 - 10:00 PM", name:"Revision + paper trade logbook review", group:"Night"}
+
 ];
 const GROUPS = ["Morning","Market","Study","Night"];
 const today = () => new Date().toLocaleDateString("en-CA");
